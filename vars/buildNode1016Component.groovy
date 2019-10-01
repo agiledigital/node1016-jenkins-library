@@ -34,13 +34,13 @@ def call(Map config) {
 
   }
 
-   container('node1016-builder') {
-    stage('Build') {
-      yarn "build"
-    }
-   }
-  
   if(config.stage == 'dist') {
+
+    container('node1016-builder') {
+      stage('Build') {
+        yarn "build"
+      }
+    }
 
     container('node1016-builder') {
 
