@@ -4,13 +4,20 @@
 
 def call(Map config) {
 
+  final supportedPackageManagers = ['yarn', 'npm']
   def artifactDir = "${config.project}-${config.component}-artifacts"
   def testOutput = "${config.project}-${config.component}-tests.xml"
+  def packageManager = (config.packageManager?.trim()) ? config.packageManager : 'yarn'
+  
+  
+  if (!packageManager in supportedPackageManagers) {
+    throw new Exception("Unsupported package manager [${packageManager}]. Expected one of [${supportedPackageManagers}]")
+  }
 
-  final yarn = { cmd ->
+  final run = { cmd ->
     ansiColor('xterm') {
       dir(config.baseDir) {
-        sh "NODE_OPTIONS=--max-old-space-size=4096 JEST_JUNIT_OUTPUT=${testOutput} yarn ${cmd}"
+        sh "NODE_OPTIONS=--max-old-space-size=4096 JEST_JUNIT_OUTPUT=${testOutput} ${packageManager} ${cmd}"
       }
     }
   }
@@ -24,11 +31,11 @@ def call(Map config) {
     }
 
     stage('Install dependencies') {
-      yarn "install"
+      run "install"
     }
 
     stage('Test') {
-      yarn 'test --ci --testResultsProcessor="jest-junit"'
+      run 'test --ci --testResultsProcessor="jest-junit"'
       junit allowEmptyResults: true, testResults: testOutput
     }
 
@@ -36,7 +43,7 @@ def call(Map config) {
 
    container('node1016-builder') {
     stage('Build') {
-      yarn "build"
+      run "build"
     }
    }
   
@@ -47,7 +54,7 @@ def call(Map config) {
       stage('Package') {
         sh "mkdir -p ${artifactDir}"
 
-        yarn "install --production --ignore-scripts --prefer-offline"
+        run "install --production --ignore-scripts --prefer-offline"
         sh "mv ${config.baseDir}/node_modules ${config.baseDir}/package.json ${artifactDir}"
 
         // The build and dist folders may exisit depending on builder.
