@@ -10,7 +10,7 @@ def call(Map config) {
   final yarn = { cmd ->
     ansiColor('xterm') {
       dir(config.baseDir) {
-        sh "NODE_OPTIONS=--max-old-space-size=4096 JEST_JUNIT_OUTPUT=${testOutput} yarn ${cmd}"
+        sh "YARN_REGISTRY=https://yarn.npmjs.org NODE_OPTIONS=--max-old-space-size=4096 JEST_JUNIT_OUTPUT=${testOutput} yarn ${cmd}"
       }
     }
   }
